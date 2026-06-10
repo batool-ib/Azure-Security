@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Azure Security Flashcards</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f5f7fa;
+    --surface: #ffffff;
+    --border: #e2e8f0;
+    --border-light: #f1f5f9;
+    --accent: #2563eb;
+    --accent-light: #eff6ff;
+    --accent-mid: #bfdbfe;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-dim: #94a3b8;
+    --tag-bg: #eff6ff;
+    --tag-text: #1d4ed8;
+    --green: #059669;
+    --card-back-bg: #f8faff;
+    --shadow: 0 4px 24px rgba(0,0,0,0.07);
+    --shadow-hover: 0 8px 40px rgba(37,99,235,0.13);
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px 60px;
+  }
+
+  /* Header */
+  header {
+    text-align: center;
+    margin-bottom: 36px;
+    width: 100%;
+    max-width: 640px;
+  }
+
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  h1 {
+    font-size: clamp(20px, 3.5vw, 28px);
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+  }
+
+  .subtitle {
+    margin-top: 6px;
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+
+  /* Filter tabs */
+  .filters {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 32px;
+    max-width: 700px;
+    width: 100%;
+  }
+
+  .filter-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.18s;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .filter-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .filter-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  /* Card area */
+  .card-area {
+    width: 100%;
+    max-width: 640px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 28px;
+  }
+
+  /* Progress */
+  .progress-row {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .progress-bar-wrap {
+    flex: 1;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: width 0.4s ease;
+  }
+
+  .progress-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    white-space: nowrap;
+  }
+
+  /* Flashcard */
+  .card-viewport {
+    width: 100%;
+    perspective: 1400px;
+    height: 320px;
+    cursor: pointer;
+  }
+
+  .card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .card-inner.flipped { transform: rotateY(180deg); }
+
+  .card-face {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    border-radius: 16px;
+    padding: 36px 40px;
+    border: 1.5px solid var(--border);
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: box-shadow 0.2s;
+  }
+
+  .card-viewport:hover .card-face { box-shadow: var(--shadow-hover); }
+
+  .card-front { background: var(--surface); }
+  .card-back  { background: var(--card-back-bg); transform: rotateY(180deg); border-color: var(--accent-mid); }
+
+  .card-back::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear---accent;
+    background: var(--accent);
+    border-radius: 16px 16px 0 0;
+  }
+
+  .card-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--tag-text);
+    background: var(--tag-bg);
+    padding: 4px 10px;
+    border-radius: 20px;
+    margin-bottom: 20px;
+    width: fit-content;
+    border: 1px solid var(--accent-mid);
+  }
+
+  .card-question {
+    font-size: 17px;
+    font-weight: 500;
+    line-height: 1.55;
+    color: var(--text-primary);
+    flex: 1;
+  }
+
+  .card-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-light);
+  }
+
+  .card-hint {
+    font-size: 11px;
+    color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .hint-dot {
+    width: 5px; height: 5px;
+    background: var(--accent);
+    border-radius: 50%;
+    opacity: 0.5;
+    animation: pulse 1.8s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.3; transform: scale(1); }
+    50% { opacity: 0.8; transform: scale(1.3); }
+  }
+
+  .card-num-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  /* Answer side */
+  .card-answer {
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text-secondary);
+    flex: 1;
+  }
+
+  .card-answer strong { color: var(--accent); font-weight: 600; }
+  .card-answer .kw {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    color: var(--green);
+    background: #f0fdf4;
+    padding: 1px 5px;
+    border-radius: 4px;
+  }
+
+  /* Navigation */
+  .nav-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .nav-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 10px 22px;
+    border-radius: 10px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.18s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    min-width: 110px;
+  }
+
+  .nav-btn:hover:not(:disabled) {
+    border-color: var(--accent);
+    color: var(--accent);
+    box-shadow: 0 2px 12px rgba(37,99,235,0.12);
+  }
+
+  .nav-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  .nav-btn svg { flex-shrink: 0; }
+
+  .flip-btn {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 10px 28px;
+    border-radius: 10px;
+    border: 1.5px solid var(--accent);
+    background: var(--accent-light);
+    color: var(--accent);
+    cursor: pointer;
+    transition: all 0.18s;
+    min-width: 120px;
+  }
+
+  .flip-btn:hover { background: var(--accent); color: #fff; }
+
+  /* Dots indicator */
+  .dots-row {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 480px;
+  }
+
+  .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--border);
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+
+  .dot.seen { background: var(--accent-mid); }
+  .dot.current { background: var(--accent); transform: scale(1.4); }
+
+  /* Reset */
+  .reset-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 8px 20px;
+    border: 1.5px solid var(--border);
+    background: transparent;
+    color: var(--text-dim);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.18s;
+    margin-top: 8px;
+  }
+
+  .reset-btn:hover { border-color: #ef4444; color: #ef4444; }
+
+  /* Slide animation */
+  .card-viewport.slide-left { animation: slideLeft 0.22s ease forwards; }
+  .card-viewport.slide-right { animation: slideRight 0.22s ease forwards; }
+
+  @keyframes slideLeft {
+    from { opacity: 1; transform: translateX(0); }
+    to   { opacity: 0; transform: translateX(-30px); }
+  }
+  @keyframes slideRight {
+    from { opacity: 1; transform: translateX(0); }
+    to   { opacity: 0; transform: translateX(30px); }
+  }
+
+  @media (max-width: 480px) {
+    .card-face { padding: 28px 24px; }
+    .card-question { font-size: 15px; }
+    .card-viewport { height: 340px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <p class="eyebrow">AZ-900 Study Material</p>
+  <h1>Azure Security Flashcards</h1>
+  <p class="subtitle">Click the card to reveal the answer</p>
+</header>
+
+<div class="filters" id="filters"></div>
+
+<div class="card-area">
+
+  <div class="progress-row">
+    <span class="progress-label" id="prog-label">1 / 30</span>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="prog-fill" style="width:0%"></div>
+    </div>
+    <span class="progress-label" id="prog-pct">0%</span>
+  </div>
+
+  <div class="card-viewport" id="card-viewport">
+    <div class="card-inner" id="card-inner">
+      <div class="card-face card-front" id="card-front">
+        <div>
+          <span class="card-tag" id="card-tag-f">Tag</span>
+          <p class="card-question" id="card-q">Question</p>
+        </div>
+        <div class="card-bottom">
+          <span class="card-hint"><span class="hint-dot"></span> click to reveal answer</span>
+          <span class="card-num-badge" id="card-num-f">01</span>
+        </div>
+      </div>
+      <div class="card-face card-back" id="card-back">
+        <div>
+          <span class="card-tag" id="card-tag-b">Tag</span>
+          <p class="card-answer" id="card-a">Answer</p>
+        </div>
+        <div class="card-bottom">
+          <span class="card-hint">click to flip back</span>
+          <span class="card-num-badge" id="card-num-b">01</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav-row">
+    <button class="nav-btn" id="prev-btn" onclick="navigate(-1)" disabled>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      Prev
+    </button>
+    <button class="flip-btn" id="flip-btn" onclick="flipCard()">Reveal</button>
+    <button class="nav-btn" id="next-btn" onclick="navigate(1)">
+      Next
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
+  </div>
+
+  <div class="dots-row" id="dots-row"></div>
+
+  <button class="reset-btn" onclick="resetAll()">Reset Progress</button>
+</div>
+
+<script>
+const allCards = [
+  { tag:"Security Center", cat:"security-center", q:"What is Azure Security Center?", a:"A <strong>monitoring service</strong> that provides threat protection across both <span class='kw'>Azure</span> and <span class='kw'>on-premises datacenters</span>." },
+  { tag:"Security Center", cat:"security-center", q:"What does the Secure Score measure?", a:"It <strong>continually assesses</strong> resources for security issues and aggregates all findings into a <span class='kw'>single score</span> representing your current security posture." },
+  { tag:"Security Center", cat:"security-center", q:"What is Policy Compliance in Security Center?", a:"Built on <strong>Azure Policy controls</strong>, it lets you <span class='kw'>set and monitor</span> policies across management groups, subscriptions, and an entire tenant." },
+  { tag:"Security Center", cat:"security-center", q:"How does Security Center generate Security Alerts?", a:"It <strong>automatically collects, analyzes, and integrates</strong> log data from resources like <span class='kw'>firewall</span> and <span class='kw'>endpoint protection</span>, then shows a prioritized alert list." },
+  { tag:"Security Center", cat:"security-center", q:"What is Resource Security Hygiene?", a:"<strong>Security visibility and recommendations by resource</strong>, covering areas like <span class='kw'>Recommendations</span>, <span class='kw'>Compute & Apps</span>, and <span class='kw'>Networking</span>." },
+  { tag:"Security Center", cat:"security-center", q:"What are Tailored Recommendations?", a:"Recommendations <strong>based on existing workload</strong> with step-by-step <span class='kw'>instructions on how to implement</span> them — not generic advice." },
+  { tag:"Security Center", cat:"security-center", q:"What does Continuous Assessments do?", a:"Assesses <strong>new and deployed resources</strong> to ensure they are <span class='kw'>configured properly</span> — automatically, without manual checks." },
+  { tag:"Security Center", cat:"security-center", q:"Name the four capabilities of Security Center.", a:"<span class='kw'>Policy Compliance</span> + <span class='kw'>Continuous Assessments</span> + <span class='kw'>Tailored Recommendations</span> + <span class='kw'>Threat Protection</span>." },
+  { tag:"Sentinel", cat:"sentinel", q:"What type of solution is Azure Sentinel?", a:"A cloud-native <strong>SIEM</strong> (Security Information and Event Management) and <strong>SOAR</strong> (Security Orchestration Automated Response) solution." },
+  { tag:"Sentinel", cat:"sentinel", q:"What are the four operational steps of Azure Sentinel?", a:"<span class='kw'>Collect</span> data across the enterprise, <span class='kw'>Detect</span> threats with threat intelligence, <span class='kw'>Investigate</span> incidents with AI, and <span class='kw'>Respond</span> rapidly and automatically." },
+  { tag:"Sentinel", cat:"sentinel", q:"Name four connectors that integrate with Azure Sentinel.", a:"<span class='kw'>Office 365</span>, <span class='kw'>Azure Active Directory</span>, <span class='kw'>Azure Advanced Threat Protection</span>, and <span class='kw'>Microsoft Cloud App Security</span>." },
+  { tag:"Sentinel", cat:"sentinel", q:"How does Azure Sentinel differ from Security Center?", a:"Security Center focuses on <strong>Azure resources</strong>; Sentinel covers the <strong>entire enterprise</strong> (including outside Azure) and provides full automated response (SOAR)." },
+  { tag:"Key Vault", cat:"key-vault", q:"What is Azure Key Vault?", a:"A <strong>centralized cloud location</strong> to store application secrets, securely control <span class='kw'>access permissions</span>, and maintain <span class='kw'>access logging</span>." },
+  { tag:"Key Vault", cat:"key-vault", q:"What does Secrets Management in Key Vault cover?", a:"Storing and controlling access to <span class='kw'>passwords</span>, <span class='kw'>API keys</span>, <span class='kw'>tokens</span>, and <span class='kw'>connection strings</span>." },
+  { tag:"Key Vault", cat:"key-vault", q:"What is Key Management in Key Vault?", a:"Creating and controlling <strong>encryption keys</strong> used to encrypt your data — ensuring no plain-text keys exist in application code." },
+  { tag:"Key Vault", cat:"key-vault", q:"What is Certificate Management in Key Vault?", a:"Provisioning, managing, and deploying <span class='kw'>SSL/TLS certificates</span> with <strong>automatic renewal</strong> and centralized secure storage." },
+  { tag:"Key Vault", cat:"key-vault", q:"What does HSM-backed storage mean?", a:"Secrets are stored using <strong>Hardware Security Modules (HSMs)</strong> — physical devices providing the highest security level, even inaccessible to Microsoft." },
+  { tag:"Dedicated Host", cat:"dedicated-host", q:"What is Azure Dedicated Host?", a:"Physical servers that host Azure VMs, <strong>dedicated to a single organization's workload</strong> — not shared with other customers." },
+  { tag:"Dedicated Host", cat:"dedicated-host", q:"What is Hardware Isolation in Dedicated Host?", a:"Your VMs run on <strong>physical hardware no other organization can access</strong>, providing complete isolation at the server level." },
+  { tag:"Dedicated Host", cat:"dedicated-host", q:"What does Control over Maintenance Event Timing mean?", a:"<strong>You decide when maintenance windows occur</strong>, not Microsoft — preventing unplanned interruptions to critical workloads." },
+  { tag:"Dedicated Host", cat:"dedicated-host", q:"What is the Azure Hybrid Use Benefit for Dedicated Host?", a:"Allows use of <strong>existing on-premises Windows Server or SQL Server licenses</strong> on Azure, avoiding paying twice for the same license." },
+  { tag:"Defense in Depth", cat:"defense", q:"What is the Defense in Depth strategy?", a:"A <strong>layered approach</strong> to securing systems. Attacks against one layer are <span class='kw'>isolated from subsequent layers</span>, providing multiple levels of protection." },
+  { tag:"Defense in Depth", cat:"defense", q:"List the 7 layers of Defense in Depth from outer to inner.", a:"<span class='kw'>Physical Security</span>, <span class='kw'>Identity & Access</span>, <span class='kw'>Perimeter</span>, <span class='kw'>Network</span>, <span class='kw'>Compute</span>, <span class='kw'>Application</span>, <span class='kw'>Data</span>." },
+  { tag:"Defense in Depth", cat:"defense", q:"In Shared Security, what is always the customer's responsibility?", a:"<strong>Data governance</strong>, <strong>client endpoints</strong>, and <strong>account & access management</strong> remain the customer's responsibility in IaaS, PaaS, and SaaS." },
+  { tag:"Defense in Depth", cat:"defense", q:"What tools cover the Perimeter and Network layers?", a:"<strong>Perimeter:</strong> <span class='kw'>Azure DDoS Protection</span> + <span class='kw'>Azure Firewall</span>. <strong>Network:</strong> <span class='kw'>NSG</span> inbound and outbound rules." },
+  { tag:"NSG", cat:"nsg", q:"What is a Network Security Group (NSG)?", a:"Filters <strong>network traffic to and from Azure resources</strong> on Azure Virtual Networks using configurable allow/deny rules." },
+  { tag:"NSG", cat:"nsg", q:"What three criteria do NSG rules filter by?", a:"<span class='kw'>Source / destination IP address</span>, <span class='kw'>Port number</span>, and <span class='kw'>Protocol</span> (TCP, UDP, or Any)." },
+  { tag:"NSG", cat:"nsg", q:"How does rule priority work in NSGs?", a:"A <strong>lower priority number = higher precedence</strong>. Custom rules with lower numbers override default rules, which have the highest numbers (e.g., 65500)." },
+  { tag:"Firewall", cat:"firewall", q:"What is Azure Firewall?", a:"A <strong>stateful, managed Firewall as a Service (FaaS)</strong> that grants or denies server access based on <span class='kw'>originating IP address</span>." },
+  { tag:"Firewall", cat:"firewall", q:"What does 'stateful' mean in Azure Firewall?", a:"It <strong>remembers the full context</strong> of a connection, not just individual packets — making it more accurate at detecting and blocking threats." },
+  { tag:"Firewall", cat:"firewall", q:"What is the difference between Azure Firewall and WAF?", a:"<span class='kw'>Azure Firewall</span> protects the entire <strong>network</strong> at IP level. <span class='kw'>WAF</span> protects <strong>web applications</strong> from HTTP-level attacks like SQL injection and XSS." },
+  { tag:"DDoS", cat:"ddos", q:"What is a DDoS attack?", a:"An attack that <strong>overwhelms and exhausts network resources</strong> with massive fake traffic, making apps slow or completely unresponsive." },
+  { tag:"DDoS", cat:"ddos", q:"What are the two tiers of Azure DDoS Protection?", a:"<span class='kw'>Basic</span>: free, automatically enabled for all Azure. <span class='kw'>Standard</span>: paid, adds advanced mitigation tuned for <strong>Azure Virtual Network resources</strong>." },
+  { tag:"DDoS", cat:"ddos", q:"How does Azure DDoS Protection work?", a:"It <strong>sanitizes unwanted traffic before it reaches your network</strong>, filtering malicious packets at the Azure backbone — before impacting service availability." }
+];
+
+const categories = [
+  { key:"all", label:"All" },
+  { key:"security-center", label:"Security Center" },
+  { key:"sentinel", label:"Sentinel" },
+  { key:"key-vault", label:"Key Vault" },
+  { key:"dedicated-host", label:"Dedicated Host" },
+  { key:"defense", label:"Defense in Depth" },
+  { key:"nsg", label:"NSG" },
+  { key:"firewall", label:"Firewall" },
+  { key:"ddos", label:"DDoS" }
+];
+
+let activeFilter = 'all';
+let filtered = [...allCards];
+let currentIndex = 0;
+let isFlipped = false;
+let seenSet = new Set();
+
+// Build filter buttons
+const filtersEl = document.getElementById('filters');
+categories.forEach(c => {
+  const btn = document.createElement('button');
+  btn.className = 'filter-btn' + (c.key === 'all' ? ' active' : '');
+  btn.textContent = c.label;
+  btn.dataset.key = c.key;
+  btn.addEventListener('click', () => {
+    activeFilter = c.key;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    filtered = activeFilter === 'all' ? [...allCards] : allCards.filter(card => card.cat === activeFilter);
+    currentIndex = 0;
+    seenSet.clear();
+    isFlipped = false;
+    document.getElementById('card-inner').classList.remove('flipped');
+    renderCard();
+    buildDots();
+  });
+  filtersEl.appendChild(btn);
+});
+
+function renderCard() {
+  if (filtered.length === 0) return;
+  const c = filtered[currentIndex];
+  const numStr = String(currentIndex + 1).padStart(2, '0') + ' / ' + String(filtered.length).padStart(2, '0');
+
+  document.getElementById('card-tag-f').textContent = c.tag;
+  document.getElementById('card-tag-b').textContent = c.tag;
+  document.getElementById('card-q').textContent = c.q;
+  document.getElementById('card-a').innerHTML = c.a;
+  document.getElementById('card-num-f').textContent = numStr;
+  document.getElementById('card-num-b').textContent = numStr;
+
+  document.getElementById('prev-btn').disabled = currentIndex === 0;
+  document.getElementById('next-btn').disabled = currentIndex === filtered.length - 1;
+  document.getElementById('flip-btn').textContent = isFlipped ? 'Flip Back' : 'Reveal';
+
+  // Progress
+  const pct = filtered.length > 1 ? Math.round((seenSet.size / filtered.length) * 100) : 0;
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('prog-label').textContent = (currentIndex + 1) + ' / ' + filtered.length;
+  document.getElementById('prog-pct').textContent = pct + '%';
+
+  updateDots();
+}
+
+function flipCard() {
+  isFlipped = !isFlipped;
+  document.getElementById('card-inner').classList.toggle('flipped', isFlipped);
+  document.getElementById('flip-btn').textContent = isFlipped ? 'Flip Back' : 'Reveal';
+  if (isFlipped) seenSet.add(currentIndex);
+  renderCard();
+}
+
+document.getElementById('card-viewport').addEventListener('click', flipCard);
+
+function navigate(dir) {
+  const vp = document.getElementById('card-viewport');
+  const animClass = dir === 1 ? 'slide-left' : 'slide-right';
+
+  vp.classList.add(animClass);
+  setTimeout(() => {
+    vp.classList.remove(animClass);
+    currentIndex += dir;
+    isFlipped = false;
+    document.getElementById('card-inner').classList.remove('flipped');
+    renderCard();
+  }, 180);
+}
+
+// Keyboard nav
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && currentIndex < filtered.length - 1) navigate(1);
+  if (e.key === 'ArrowLeft'  && currentIndex > 0)                   navigate(-1);
+  if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); flipCard(); }
+});
+
+// Dots
+function buildDots() {
+  const row = document.getElementById('dots-row');
+  row.innerHTML = '';
+  filtered.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'dot';
+    d.addEventListener('click', () => {
+      currentIndex = i;
+      isFlipped = false;
+      document.getElementById('card-inner').classList.remove('flipped');
+      renderCard();
+    });
+    row.appendChild(d);
+  });
+}
+
+function updateDots() {
+  const dots = document.querySelectorAll('.dot');
+  dots.forEach((d, i) => {
+    d.className = 'dot';
+    if (i === currentIndex) d.classList.add('current');
+    else if (seenSet.has(i)) d.classList.add('seen');
+  });
+}
+
+function resetAll() {
+  currentIndex = 0;
+  isFlipped = false;
+  seenSet.clear();
+  document.getElementById('card-inner').classList.remove('flipped');
+  renderCard();
+}
+
+buildDots();
+renderCard();
+</script>
+</body>
+</html>
